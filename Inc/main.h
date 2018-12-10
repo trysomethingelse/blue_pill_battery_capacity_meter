@@ -52,7 +52,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "hd44780.h"
+#include "menu.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -80,8 +81,15 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SW1_Pin GPIO_PIN_8
+#define SW1_GPIO_Port GPIOB
+#define SW1_EXTI_IRQn EXTI9_5_IRQn
+#define SW2_Pin GPIO_PIN_9
+#define SW2_GPIO_Port GPIOB
+#define SW2_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
-
+#define TRUE 1
+#define FALSE 0
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

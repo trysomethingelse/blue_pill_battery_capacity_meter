@@ -43,7 +43,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hd44780.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +69,8 @@ RTC_HandleTypeDef hrtc;
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-
+int SW_number = 0;
+volatile uint8_t time_actualization = FALSE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -119,16 +120,24 @@ int main(void)
   MX_TIM2_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
+
   lcd_init();
-  lcd_print_letter('d');
+  lcd_write(DISPLAY_HOME);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_RTC_Init(&hrtc);
+  zeroTimer();
   while (1)
   {
-    /* USER CODE END WHILE */
+	  if (time_actualization==TRUE)
+	  {
+		  time_actualization = FALSE;
+		  actualizeTimeOnLCD();
+	  }
 
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -251,7 +260,7 @@ static void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
-
+  HAL_RTCEx_SetSecond_IT(&hrtc);
   /* USER CODE END RTC_Init 2 */
 
 }
@@ -349,16 +358,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pins : SW1_Pin SW2_Pin */
+  GPIO_InitStruct.Pin = SW1_Pin|SW2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+ 	if(GPIO_Pin == SW1_Pin)
+ 		SW_number = SW1_Pin;
+ 	if(GPIO_Pin == SW2_Pin)
+ 		SW_number = SW2_Pin;
+}
 /* USER CODE END 4 */
 
 /**
