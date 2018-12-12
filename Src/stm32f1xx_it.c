@@ -71,12 +71,15 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
 extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
 extern uint8_t actualize_time;
 extern uint8_t actualized_integration;
 extern double measured_capacity;
+extern uint16_t measured_voltage;
+extern uint16_t measured_voltage2;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -231,6 +234,22 @@ void RTC_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles ADC1 and ADC2 global interrupts.
+  */
+void ADC1_2_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC1_2_IRQn 0 */
+
+  /* USER CODE END ADC1_2_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  /* USER CODE BEGIN ADC1_2_IRQn 1 */
+// measured_capacity += 0.01;
+  measured_voltage = HAL_ADC_GetValue(&hadc1);
+  measured_voltage2 = HAL_ADC_GetValue(&hadc1);
+  /* USER CODE END ADC1_2_IRQn 1 */
+}
+
+/**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
 void EXTI9_5_IRQHandler(void)
@@ -255,7 +274,7 @@ void TIM3_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
   actualized_integration = TRUE;
-  measured_capacity += 0.001;
+  HAL_ADC_Start_IT(&hadc1);
 
   /* USER CODE END TIM3_IRQn 1 */
 }
