@@ -72,8 +72,11 @@
 
 /* External variables --------------------------------------------------------*/
 extern RTC_HandleTypeDef hrtc;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
-extern uint8_t time_actualization;
+extern uint8_t actualize_time;
+extern uint8_t actualized_integration;
+extern double measured_capacity;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -223,7 +226,7 @@ void RTC_IRQHandler(void)
   /* USER CODE END RTC_IRQn 0 */
   HAL_RTCEx_RTCIRQHandler(&hrtc);
   /* USER CODE BEGIN RTC_IRQn 1 */
-  time_actualization = TRUE;
+  actualize_time = TRUE;
   /* USER CODE END RTC_IRQn 1 */
 }
 
@@ -239,6 +242,22 @@ void EXTI9_5_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
   /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+  actualized_integration = TRUE;
+  measured_capacity += 0.001;
+
+  /* USER CODE END TIM3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
