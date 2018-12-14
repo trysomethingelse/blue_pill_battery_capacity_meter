@@ -72,11 +72,15 @@ TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 int SW_number = 0;
-volatile uint8_t actualize_time = FALSE;
-volatile uint8_t actualized_integration =  FALSE;
-volatile double measured_capacity = 0;
-volatile uint16_t measured_voltage = 0;
-volatile uint16_t measured_voltage2 = 0;
+volatile uint8_t actualize_lcd = FALSE;
+volatile uint8_t actualized_adc =  FALSE;
+volatile uint16_t battery_adc = 0;
+volatile uint16_t shount_adc = 0;
+
+
+uint16_t battery_voltage = 0;
+uint16_t shount_current = 0;
+double measured_energy = 0;
 
 /* USER CODE END PV */
 
@@ -146,18 +150,18 @@ int main(void)
   zeroTimer();
   while (1)
   {
-	  if (actualize_time==TRUE)
+	  if (actualize_lcd==TRUE)
 	  {
-		  actualize_time = FALSE;
-		  actualizeTimeOnLCD();
-		  lcd_write(SET_SECOND_LINE);
-		  lcd_print_int(measured_voltage);
-		  lcd_print("  V2:");
-		  lcd_print_int(measured_voltage2);
+		  actualize_lcd = FALSE;
+		  actualizeLCD();
 	  }
-	  if (actualized_integration==TRUE)
+	  if (actualized_adc==TRUE)
 	  {
-		  actualized_integration = FALSE;
+		  actualized_adc= FALSE;
+		  battery_voltage = 2 *  battery_adc/4096.0 * 3300;
+		  shount_current = 2 * shount_adc/4096.0 * 3300;
+		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(interrupt_time_ms/1000.0);
+		  measured_energy += measured_energy_delta/3600;
 	  }
     /* USER CODE END WHILE */
 
@@ -485,9 +489,10 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	//pass two values, becouse we dont know which one comes
-	measured_voltage = HAL_ADC_GetValue(&hadc1);
-	measured_voltage2 = HAL_ADC_GetValue(&hadc2);
+	//pass two values, because we don't know which one comes
+	battery_adc = HAL_ADC_GetValue(&hadc1);
+	shount_adc = HAL_ADC_GetValue(&hadc2);
+	actualized_adc = TRUE;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

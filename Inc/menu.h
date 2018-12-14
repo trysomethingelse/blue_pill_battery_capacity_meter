@@ -14,5 +14,5 @@
 
 
 void zeroTimer(void);
-void actualizeTimeOnLCD(void);
+void actualizeLCD(void);
 #endif /* MENU_H_ */

@@ -76,11 +76,7 @@ extern ADC_HandleTypeDef hadc2;
 extern RTC_HandleTypeDef hrtc;
 extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
-extern uint8_t actualize_time;
-extern uint8_t actualized_integration;
-extern double measured_capacity;
-//extern uint16_t measured_voltage;
-//extern uint16_t measured_voltage2;
+extern uint8_t actualize_lcd;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -230,7 +226,7 @@ void RTC_IRQHandler(void)
   /* USER CODE END RTC_IRQn 0 */
   HAL_RTCEx_RTCIRQHandler(&hrtc);
   /* USER CODE BEGIN RTC_IRQn 1 */
-  actualize_time = TRUE;
+  actualize_lcd = TRUE;
   /* USER CODE END RTC_IRQn 1 */
 }
 
@@ -274,7 +270,6 @@ void TIM3_IRQHandler(void)
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
-  actualized_integration = TRUE;
   HAL_ADC_Start_IT(&hadc1);
   HAL_ADC_Start_IT(&hadc2);
 

@@ -81,6 +81,7 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define interrupt_time_ms 1.3653
 #define SW1_Pin GPIO_PIN_8
 #define SW1_GPIO_Port GPIOB
 #define SW1_EXTI_IRQn EXTI9_5_IRQn
