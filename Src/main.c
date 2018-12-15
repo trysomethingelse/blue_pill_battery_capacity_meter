@@ -73,14 +73,16 @@ TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN PV */
 int SW_number = 0;
 volatile uint8_t actualize_lcd = FALSE;
-volatile uint8_t actualized_adc =  FALSE;
+volatile uint8_t actualize_adc =  FALSE;
 volatile uint16_t battery_adc = 0;
 volatile uint16_t shount_adc = 0;
 
 
 uint16_t battery_voltage = 0;
 uint16_t shount_current = 0;
-double measured_energy = 0;
+volatile double measured_energy = 0;
+volatile double measured_energy_temp = 0;
+volatile int last_time = 0;
 
 /* USER CODE END PV */
 
@@ -139,7 +141,6 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADCEx_Calibration_Start(&hadc2);
 
-
   lcd_init();
   lcd_write(DISPLAY_HOME);
   /* USER CODE END 2 */
@@ -152,16 +153,33 @@ int main(void)
   {
 	  if (actualize_lcd==TRUE)
 	  {
+		  measured_energy = measured_energy_temp;
+		  measured_energy_temp = 0;
 		  actualize_lcd = FALSE;
 		  actualizeLCD();
+		  measured_energy = 0;
+
 	  }
-	  if (actualized_adc==TRUE)
+	  if (actualize_adc==TRUE)
 	  {
-		  actualized_adc= FALSE;
 		  battery_voltage = 2 *  battery_adc/4096.0 * 3300;
 		  shount_current = 2 * shount_adc/4096.0 * 3300;
-		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(interrupt_time_ms/1000.0);
-		  measured_energy += measured_energy_delta/3600;
+		//  last_time += TIM3->CNT;
+		  double delta_time = last_time/interrupt_time_counter_TIM3;
+		  delta_time = 1;//ms
+
+		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(delta_time/1000.0);
+		 // measured_energy += measured_energy_delta/3600;
+		//  measured_energy += 1; //measured_energy_delta/3600;
+		  last_time = 0;
+		  actualize_adc= FALSE;
+		  //measured_energy = 0;
+	  }
+	  if (SW_number == SW2_Pin)
+	  {
+		  SW_number = 0;
+		  measured_energy = 0;
+		  zeroTimer();
 	  }
     /* USER CODE END WHILE */
 
@@ -182,11 +200,11 @@ void SystemClock_Config(void)
 
   /**Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
@@ -208,7 +226,7 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
-  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -325,13 +343,13 @@ static void MX_RTC_Init(void)
   */
   hrtc.Instance = RTC;
   hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
-  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_SECOND;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
-  HAL_RTCEx_SetSecond_IT(&hrtc);
+   HAL_RTCEx_SetSecond_IT(&hrtc);
   /* USER CODE END RTC_Init 2 */
 
 }
@@ -415,8 +433,8 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 0xFFFF;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_DOWN;
+  htim3.Init.Period = 0xBB80;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -450,6 +468,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -492,7 +511,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 	//pass two values, because we don't know which one comes
 	battery_adc = HAL_ADC_GetValue(&hadc1);
 	shount_adc = HAL_ADC_GetValue(&hadc2);
-	actualized_adc = TRUE;
+	actualize_adc = TRUE;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -502,6 +521,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  	if(GPIO_Pin == SW2_Pin)
  		SW_number = SW2_Pin;
 }
+
 /* USER CODE END 4 */
 
 /**
