@@ -79,7 +79,7 @@ extern TIM_HandleTypeDef htim3;
 extern uint8_t actualize_lcd;
 extern uint8_t actualize_adc;
 extern uint32_t last_time;
-extern double measured_energy_temp;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -273,14 +273,12 @@ void TIM3_IRQHandler(void)
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
-//  if (last_time == 0) // computed last iteration
-//  {
-	  //HAL_ADC_Start_IT(&hadc1);
-	  //HAL_ADC_Start_IT(&hadc2);
-	 // measured_energy+=1;
-	  measured_energy_temp += 1;
-//  }
-//  last_time += interrupt_time_counter_TIM3;
+  if (last_time == 0) // computed last iteration
+  {
+	  HAL_ADC_Start_IT(&hadc1);
+	  HAL_ADC_Start_IT(&hadc2);
+  }
+   last_time += interrupt_time_counter_TIM3;
   /* USER CODE END TIM3_IRQn 1 */
 }
 

@@ -153,27 +153,23 @@ int main(void)
   {
 	  if (actualize_lcd==TRUE)
 	  {
-		  measured_energy = measured_energy_temp;
-		  measured_energy_temp = 0;
 		  actualize_lcd = FALSE;
 		  actualizeLCD();
-		  measured_energy = 0;
-
+		 // measured_energy = 0;
 	  }
 	  if (actualize_adc==TRUE)
 	  {
 		  battery_voltage = 2 *  battery_adc/4096.0 * 3300;
 		  shount_current = 2 * shount_adc/4096.0 * 3300;
-		//  last_time += TIM3->CNT;
+		  last_time += TIM3->CNT;
 		  double delta_time = last_time/interrupt_time_counter_TIM3;
-		  delta_time = 1;//ms
 
 		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(delta_time/1000.0);
-		 // measured_energy += measured_energy_delta/3600;
-		//  measured_energy += 1; //measured_energy_delta/3600;
+		  measured_energy += measured_energy_delta/3600;
+
 		  last_time = 0;
 		  actualize_adc= FALSE;
-		  //measured_energy = 0;
+
 	  }
 	  if (SW_number == SW2_Pin)
 	  {
