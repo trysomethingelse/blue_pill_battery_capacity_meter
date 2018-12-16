@@ -48,7 +48,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+enum gpio_switch{SW1, SW2, NO_SW};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -71,9 +71,9 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
-int SW_number = 0;
-volatile uint8_t actualize_lcd = FALSE;
-volatile uint8_t actualize_adc =  FALSE;
+enum gpio_switch SW_number = NO_SW;
+volatile enum boolean actualize_lcd = FALSE;
+volatile enum boolean actualize_adc =  FALSE;
 volatile uint16_t battery_adc = 0;
 volatile uint16_t shount_adc = 0;
 
@@ -150,6 +150,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   HAL_RTC_Init(&hrtc);
   zeroTimer();
+  uint16_t SW_counter[2] = {0,0};
   while (1)
   {
 	  if (actualize_lcd==TRUE)
@@ -170,13 +171,24 @@ int main(void)
 		  adjustShountCurrent(200);
 		  last_time = 0;
 		  actualize_adc= FALSE;
-
+		  if(SW_counter[SW1] > 0) SW_counter[SW1]--;
+		  if(SW_counter[SW2] > 0) SW_counter[SW2]--;
 	  }
-	  if (SW_number == SW2_Pin)
+	  if (SW_number == SW1 && SW_counter[SW1] == 0 )
 	  {
-		  SW_number = 0;
+		  SW_number = NO_SW;
+		  SW_counter[SW1] = SWITCH_DEBOUNCE;
 		  measured_energy = 0;
 		  zeroTimer();
+		  actualize_lcd = TRUE;
+	  }
+	  if (SW_number == SW2 && SW_counter[SW2] == 0 )
+	  {
+		  SW_number = NO_SW;
+		  SW_counter[SW2] = SWITCH_DEBOUNCE;
+		  measured_energy = 0;
+		  zeroTimer();
+		  actualize_lcd = TRUE;
 	  }
 
     /* USER CODE END WHILE */
@@ -515,9 +527,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
  	if(GPIO_Pin == SW1_Pin)
- 		SW_number = SW1_Pin;
+ 		SW_number = SW1;
  	if(GPIO_Pin == SW2_Pin)
- 		SW_number = SW2_Pin;
+ 		SW_number = SW2;
 }
 
 void adjustShountCurrent(uint16_t current_to_set)//current in mA
@@ -553,6 +565,7 @@ void adjustShountCurrent(uint16_t current_to_set)//current in mA
 	}
 
 }
+
 /* USER CODE END 4 */
 
 /**

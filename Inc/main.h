@@ -91,8 +91,9 @@ void Error_Handler(void);
 #define SW2_GPIO_Port GPIOB
 #define SW2_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
-#define TRUE 1
-#define FALSE 0
+
+enum boolean {FALSE, TRUE};
+#define SWITCH_DEBOUNCE 100
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
