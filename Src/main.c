@@ -80,8 +80,8 @@ volatile uint16_t shount_adc = 0;
 
 uint16_t battery_voltage = 0;
 uint16_t shount_current = 0;
+uint16_t pwm_pulse = 0;
 volatile double measured_energy = 0;
-volatile double measured_energy_temp = 0;
 volatile int last_time = 0;
 
 /* USER CODE END PV */
@@ -95,7 +95,7 @@ static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void adjustShountCurrent(uint16_t current_to_set);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -156,7 +156,6 @@ int main(void)
 	  {
 		  actualize_lcd = FALSE;
 		  actualizeLCD();
-		 // measured_energy = 0;
 	  }
 	  if (actualize_adc==TRUE)
 	  {
@@ -168,6 +167,7 @@ int main(void)
 		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(delta_time/1000.0);
 		  measured_energy += measured_energy_delta/3600;
 
+		  adjustShountCurrent(200);
 		  last_time = 0;
 		  actualize_adc= FALSE;
 
@@ -178,6 +178,7 @@ int main(void)
 		  measured_energy = 0;
 		  zeroTimer();
 	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -396,7 +397,7 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 100;
+  sConfigOC.Pulse = 480;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -519,9 +520,37 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  		SW_number = SW2_Pin;
 }
 
-void adjustShountCurrent(uint16_t current_to_set)
+void adjustShountCurrent(uint16_t current_to_set)//current in mA
 {
+	uint8_t shouldSetNew = TRUE;
+	TIM_OC_InitTypeDef sConfigOC = {0};
 
+	if (shount_current > current_to_set)//shount_current greater and increase pwm because mosfet is N type
+	{
+		if (pwm_pulse != pwm_period)
+			pwm_pulse++;
+	}
+	else if(shount_current < current_to_set)
+	{
+		if (pwm_pulse != 0)
+			pwm_pulse--;
+	}
+	else
+		shouldSetNew = FALSE;
+
+	if (shouldSetNew == TRUE)
+	{
+		HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
+		sConfigOC.OCMode = TIM_OCMODE_PWM1;
+		sConfigOC.Pulse = pwm_pulse;
+		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+		sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+		if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+		{
+			Error_Handler();
+		}
+		HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+	}
 
 }
 /* USER CODE END 4 */
