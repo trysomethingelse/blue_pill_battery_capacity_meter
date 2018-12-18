@@ -93,7 +93,14 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 enum boolean {FALSE, TRUE};
-#define SWITCH_DEBOUNCE 100
+#define SWITCH_DEBOUNCE 300
+
+#define CELL_18650_VOLTAGE 3700
+#define CELL_18650_MIN_VOLTAGE 2500
+#define CELL_18650_MIN_CURRENT 10
+#define CELL_18650_TYPICAL_CURRENT 1000
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

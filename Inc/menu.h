@@ -13,6 +13,9 @@
 #include "hd44780.h"
 
 
+
+
 void zeroTimer(void);
 void actualizeLCD(void);
+void pauseTimer(void);
 #endif /* MENU_H_ */
