@@ -85,7 +85,7 @@ volatile double measured_energy = 0;
 volatile int last_time = 0;
 
 enum boolean measure_start = FALSE;
-uint16_t discharging_current = CELL_18650_TYPICAL_CURRENT;
+uint16_t discharging_current = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -168,10 +168,13 @@ int main(void)
 		  last_time += TIM3->CNT;
 		  double delta_time = last_time/interrupt_time_counter_TIM3;
 
-		  double measured_energy_delta = (battery_voltage/1000.0)*shount_current*(delta_time/1000.0);
+		  double measured_energy_delta = (battery_voltage/CELL_18650_VOLTAGE)*shount_current*(delta_time/1000.0);
 		  measured_energy += measured_energy_delta/3600;
-
 		  adjustShountCurrent(discharging_current);
+		  if (measure_start == TRUE)
+		  {
+			  cell_18650_measure();
+		  }
 		  last_time = 0;
 		  actualize_adc= FALSE;
 		  if(SW_counter[SW1] > 0) SW_counter[SW1]--;
@@ -182,22 +185,30 @@ int main(void)
 		  SW_number = NO_SW;
 		  SW_counter[SW1] = SWITCH_DEBOUNCE;
 		  actualize_lcd = TRUE;
-		  if (measure_start == TRUE) measure_start = FALSE;
-		  else measure_start = TRUE;
-		  pauseTimer();
+		  if (measure_start == TRUE)
+		  {
+			  measure_start = FALSE;
+			  pauseTimer();
+			  discharging_current = 0;
+		  }
+		  else
+		  {
+			  discharging_current = CELL_18650_TYPICAL_CURRENT;
+			  measure_start = TRUE;
+		  	  runTimer();
+		  }
 	  }
 	  if (SW_number == SW2 && SW_counter[SW2] == 0 )//reset
 	  {
 		  SW_number = NO_SW;
 		  SW_counter[SW2] = SWITCH_DEBOUNCE;
-		  measure_start = FALSE;
-		  measured_energy = 0;
-		  zeroTimer();
 		  actualize_lcd = TRUE;
-		  discharging_current = CELL_18650_TYPICAL_CURRENT;
+		  measure_start = FALSE;
+		  zeroTimer();
+		  pauseTimer();
+		  discharging_current = 0;
+		  measured_energy = 0;
 	  }
-	  if (measure_start ==TRUE)
-		  cell_18650_measure();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -574,23 +585,17 @@ void adjustShountCurrent(uint16_t current_to_set)//current in mA
 }
 void cell_18650_measure(void)
 {
-	if(measure_start == TRUE)//START
+	adjustShountCurrent(discharging_current);
+	if(shount_current <= CELL_18650_MIN_CURRENT &&  battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
 	{
-		adjustShountCurrent(discharging_current);
-		if(shount_current <= CELL_18650_MIN_CURRENT)
-			measure_start = TRUE;
-		else
-		{
-			if(battery_voltage < CELL_18650_MIN_VOLTAGE)
-				discharging_current--;
-		}
-	}
-	else
-	{
+		measure_start = FALSE;
 		adjustShountCurrent(0);
+		pauseTimer();
 	}
-
-
+	else if(battery_voltage <= CELL_18650_MIN_VOLTAGE)
+	{
+		discharging_current--;
+	}
 }
 /* USER CODE END 4 */
 

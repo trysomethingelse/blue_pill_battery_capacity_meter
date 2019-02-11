@@ -94,12 +94,16 @@ void pauseTimer(void)
 		timerPause = TRUE;
 		sTime_pause = sTime;
 	}
-	else
+}
+void runTimer()
+{
+	if(timerPause == TRUE)
 	{
 		timerPause = FALSE;
 		HAL_RTC_SetTime(&hrtc,&sTime_pause,RTC_FORMAT_BIN);
 	}
 }
+
 
 void actualizeLCD(void)
 {
@@ -134,7 +138,7 @@ void actualizeLCD(void)
 
 	lcd_print_letter(' ');
 	lcd_print_int((uint16_t)measured_energy);
-	lcd_print("mWh");
+	lcd_print("mAh");
 
 
 }
