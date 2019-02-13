@@ -92,10 +92,10 @@ uint16_t discharging_current = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_RTC_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 void adjustShountCurrent(uint16_t current_to_set);
 void cell_18650_measure(void);
@@ -135,10 +135,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
-  MX_RTC_Init();
   MX_TIM3_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_ADCEx_Calibration_Start(&hadc1);

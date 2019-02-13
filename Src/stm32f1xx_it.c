@@ -225,11 +225,11 @@ void SysTick_Handler(void)
 void RTC_IRQHandler(void)
 {
   /* USER CODE BEGIN RTC_IRQn 0 */
-
+	actualize_lcd = TRUE;
   /* USER CODE END RTC_IRQn 0 */
   HAL_RTCEx_RTCIRQHandler(&hrtc);
   /* USER CODE BEGIN RTC_IRQn 1 */
-  actualize_lcd = TRUE;
+
   /* USER CODE END RTC_IRQn 1 */
 }
 

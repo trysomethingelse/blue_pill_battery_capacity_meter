@@ -21,13 +21,13 @@ uint8_t busy_flag_check()
 			out = NOT_BUSY;
 			break;
 		}
-		HAL_Delay(1);
+
 	}
 
 	//set data lines as output
 	GPIO_InitStruct.Pin = LCD_4567;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(LCD_DATA_PORT, &GPIO_InitStruct);
 	HAL_GPIO_WritePin(LCD_CONTROL_PORT,LCD_RW,GPIO_PIN_RESET);//write to lcd
 	//HAL_GPIO_WritePin(LCD_CONTROL_PORT,LCD_CLOCK,GPIO_PIN_RESET);
@@ -123,6 +123,5 @@ void lcd_clock()
 	HAL_Delay(1);
 	HAL_GPIO_WritePin(LCD_CONTROL_PORT, LCD_CLOCK,GPIO_PIN_RESET);
 	HAL_Delay(1);
-
 }
 
