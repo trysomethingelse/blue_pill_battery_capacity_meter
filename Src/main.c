@@ -99,6 +99,7 @@ static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 void adjustShountCurrent(uint16_t current_to_set);
 void cell_18650_measure(void);
+void cell_18650_measure_const_current(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -173,7 +174,8 @@ int main(void)
 		  adjustShountCurrent(discharging_current);
 		  if (measure_start == TRUE)
 		  {
-			  cell_18650_measure();
+			  //cell_18650_measure();
+			  cell_18650_measure_const_current();
 		  }
 		  last_time = 0;
 		  actualize_adc= FALSE;
@@ -595,6 +597,16 @@ void cell_18650_measure(void)
 	else if(battery_voltage <= CELL_18650_MIN_VOLTAGE)
 	{
 		discharging_current--;
+	}
+}
+void cell_18650_measure_const_current(void)
+{
+	adjustShountCurrent(discharging_current);
+	if(battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
+	{
+		measure_start = FALSE;
+		adjustShountCurrent(0);
+		pauseTimer();
 	}
 }
 /* USER CODE END 4 */
