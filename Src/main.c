@@ -591,7 +591,7 @@ void cell_18650_measure(void)
 	if(shount_current <= CELL_18650_MIN_CURRENT &&  battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
 	{
 		measure_start = FALSE;
-		adjustShountCurrent(0);
+		discharging_current = 0;
 		pauseTimer();
 	}
 	else if(battery_voltage <= CELL_18650_MIN_VOLTAGE)
@@ -605,7 +605,7 @@ void cell_18650_measure_const_current(void)
 	if(battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
 	{
 		measure_start = FALSE;
-		adjustShountCurrent(0);
+		discharging_current = 0;
 		pauseTimer();
 	}
 }
