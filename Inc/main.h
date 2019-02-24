@@ -94,6 +94,7 @@ void Error_Handler(void);
 
 enum boolean {FALSE, TRUE};
 #define SWITCH_DEBOUNCE 400
+#define ADJUST_CURRENT_INTERVAL 10
 
 #define CELL_18650_VOLTAGE 3700.0
 #define CELL_18650_MIN_VOLTAGE 3000.0

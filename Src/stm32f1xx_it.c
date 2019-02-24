@@ -76,8 +76,8 @@ extern ADC_HandleTypeDef hadc2;
 extern RTC_HandleTypeDef hrtc;
 extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
-extern uint8_t actualize_lcd;
-extern uint8_t actualize_adc;
+extern uint8_t should_actualize_lcd;
+extern uint8_t should_actualize_adc;
 extern uint32_t last_time;
 
 /* USER CODE END EV */
@@ -225,7 +225,7 @@ void SysTick_Handler(void)
 void RTC_IRQHandler(void)
 {
   /* USER CODE BEGIN RTC_IRQn 0 */
-	actualize_lcd = TRUE;
+	should_actualize_lcd = TRUE;
   /* USER CODE END RTC_IRQn 0 */
   HAL_RTCEx_RTCIRQHandler(&hrtc);
   /* USER CODE BEGIN RTC_IRQn 1 */

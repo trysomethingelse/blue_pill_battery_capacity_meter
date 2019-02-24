@@ -105,7 +105,7 @@ void runTimer()
 }
 
 
-void actualizeLCD(void)
+void actualize_LCD(void)
 {
 	//first line
 	lcd_write(DISPLAY_CLEAR);

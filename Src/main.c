@@ -72,8 +72,8 @@ TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 enum gpio_switch SW_number = NO_SW;
-volatile enum boolean actualize_lcd = FALSE;
-volatile enum boolean actualize_adc =  FALSE;
+volatile enum boolean should_actualize_lcd = FALSE;
+volatile enum boolean should_actualize_adc =  FALSE;
 volatile uint16_t battery_adc = 0;
 volatile uint16_t shount_adc = 0;
 
@@ -86,6 +86,8 @@ volatile int last_time = 0;
 
 enum boolean measure_start = FALSE;
 uint16_t discharging_current = 0;
+uint16_t SW_counter[2] = {0,0};
+uint16_t adjust_current_counter = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,6 +99,8 @@ static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
+void switch_check(void);
+void actualize_ADC(void);
 void adjustShountCurrent(uint16_t current_to_set);
 void cell_18650_measure(void);
 void cell_18650_measure_const_current(void);
@@ -154,63 +158,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   HAL_RTC_Init(&hrtc);
   zeroTimer();
-  uint16_t SW_counter[2] = {0,0};
+
   while (1)
   {
-	  if (actualize_lcd==TRUE)
+	  if (should_actualize_lcd==TRUE)
 	  {
-		  actualize_lcd = FALSE;
-		  actualizeLCD();
-	  }
-	  if (actualize_adc==TRUE)
-	  {
-		  battery_voltage = 2 *  battery_adc/4096.0 * 3300;
-		  shount_current = 2 * shount_adc/4096.0 * 3300;
-		  last_time += TIM3->CNT;
-		  double delta_time = last_time/interrupt_time_counter_TIM3;
+		  should_actualize_lcd = FALSE;
+		  actualize_LCD();
 
-		  double measured_energy_delta = (battery_voltage/CELL_18650_VOLTAGE)*shount_current*(delta_time/1000.0);
-		  measured_energy += measured_energy_delta/3600;
+	  }
+	  if (should_actualize_adc==TRUE)
+	  {
+		  should_actualize_adc= FALSE;
+		  actualize_ADC();
 		  adjustShountCurrent(discharging_current);
-		  if (measure_start == TRUE)
-		  {
-			  //cell_18650_measure();
-			  cell_18650_measure_const_current();
-		  }
-		  last_time = 0;
-		  actualize_adc= FALSE;
-		  if(SW_counter[SW1] > 0) SW_counter[SW1]--;
-		  if(SW_counter[SW2] > 0) SW_counter[SW2]--;
 	  }
-	  if (SW_number == SW1 && SW_counter[SW1] == 0 )//start - pause
-	  {
-		  SW_number = NO_SW;
-		  SW_counter[SW1] = SWITCH_DEBOUNCE;
-		  actualize_lcd = TRUE;
-		  if (measure_start == TRUE)
-		  {
-			  measure_start = FALSE;
-			  pauseTimer();
-			  discharging_current = 0;
-		  }
-		  else
-		  {
-			  discharging_current = CELL_18650_TYPICAL_CURRENT;
-			  measure_start = TRUE;
-		  	  runTimer();
-		  }
-	  }
-	  if (SW_number == SW2 && SW_counter[SW2] == 0 )//reset
-	  {
-		  SW_number = NO_SW;
-		  SW_counter[SW2] = SWITCH_DEBOUNCE;
-		  actualize_lcd = TRUE;
-		  measure_start = FALSE;
-		  zeroTimer();
-		  pauseTimer();
-		  discharging_current = 0;
-		  measured_energy = 0;
-	  }
+	  switch_check();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -541,7 +504,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 	//pass two values, because we don't know which one comes
 	battery_adc = HAL_ADC_GetValue(&hadc1);
 	shount_adc = HAL_ADC_GetValue(&hadc2);
-	actualize_adc = TRUE;
+	should_actualize_adc = TRUE;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -551,43 +514,104 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  	if(GPIO_Pin == SW2_Pin)
  		SW_number = SW2;
 }
+void switch_check(void)
+{
+	 if (SW_number == SW1 && SW_counter[SW1] == 0 )//start - pause
+	  {
+		  SW_number = NO_SW;
+		  SW_counter[SW1] = SWITCH_DEBOUNCE;
+		  should_actualize_lcd = TRUE;
+		  if (measure_start == TRUE)
+		  {
+			  measure_start = FALSE;
+			  pauseTimer();
+			  discharging_current = 0;
+		  }
+		  else
+		  {
+			  discharging_current = CELL_18650_TYPICAL_CURRENT;
+			  measure_start = TRUE;
+			  runTimer();
+		  }
+	  }
+	  if (SW_number == SW2 && SW_counter[SW2] == 0 )//reset
+	  {
+		  SW_number = NO_SW;
+		  SW_counter[SW2] = SWITCH_DEBOUNCE;
+		  should_actualize_lcd = TRUE;
+		  measure_start = FALSE;
+		  zeroTimer();
+		  pauseTimer();
+		  discharging_current = 0;
+		  measured_energy = 0;
+	  }
+}
+void actualize_ADC(void)
+{
+	  battery_voltage = 2 *  battery_adc/4096.0 * 3300;
+	  shount_current = 2 * shount_adc/4096.0 * 3300;
+	  last_time += TIM3->CNT;
+	  double delta_time = last_time/interrupt_time_counter_TIM3;
 
+	  double measured_energy_delta = (battery_voltage/CELL_18650_VOLTAGE)*shount_current*(delta_time/1000.0);
+	  measured_energy += measured_energy_delta/3600;
+
+	  if (measure_start == TRUE)
+	  {
+		  //cell_18650_measure();
+		  cell_18650_measure_const_current();
+	  }
+	  last_time = 0;
+	  if(SW_counter[SW1] > 0) SW_counter[SW1]--;
+	  if(SW_counter[SW2] > 0) SW_counter[SW2]--;
+}
 void adjustShountCurrent(uint16_t current_to_set)//current in mA
 {
-	uint8_t shouldSetNew = TRUE;
-	TIM_OC_InitTypeDef sConfigOC = {0};
+	if (adjust_current_counter == ADJUST_CURRENT_INTERVAL)
+	{
+		adjust_current_counter = 0;
+		uint8_t shouldSetNew = TRUE;
+		TIM_OC_InitTypeDef sConfigOC = {0};
 
-	if (shount_current > current_to_set)//shount_current greater and increase pwm because mosfet is N type
-	{
-		if (pwm_pulse != pwm_period)
-			pwm_pulse++;
-	}
-	else if(shount_current < current_to_set)
-	{
-		if (pwm_pulse != 0)
-			pwm_pulse--;
+		if (current_to_set == 0)
+		{
+			pwm_pulse = pwm_period;
+		}
+		else if (shount_current > current_to_set)//shount_current greater, so increase pwm because mosfet is N type
+		{
+			if (pwm_pulse != pwm_period)
+				pwm_pulse++;
+		}
+		else if(shount_current < current_to_set)
+		{
+			if (pwm_pulse != 0)
+				pwm_pulse--;
+		}
+		else
+			shouldSetNew = FALSE;
+		if (shouldSetNew == TRUE)
+		{
+			HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
+			sConfigOC.OCMode = TIM_OCMODE_PWM1;
+			sConfigOC.Pulse = pwm_pulse;
+			sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+			sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+			if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+			{
+				Error_Handler();
+			}
+			HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+		}
 	}
 	else
-		shouldSetNew = FALSE;
-
-	if (shouldSetNew == TRUE)
 	{
-		HAL_TIM_PWM_Stop(&htim2,TIM_CHANNEL_1);
-		sConfigOC.OCMode = TIM_OCMODE_PWM1;
-		sConfigOC.Pulse = pwm_pulse;
-		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-		sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-		if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-		{
-			Error_Handler();
-		}
-		HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+		adjust_current_counter++;
 	}
 
 }
 void cell_18650_measure(void)
 {
-	adjustShountCurrent(discharging_current);
+//	adjustShountCurrent(discharging_current);
 	if(shount_current <= CELL_18650_MIN_CURRENT &&  battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
 	{
 		measure_start = FALSE;
@@ -601,7 +625,6 @@ void cell_18650_measure(void)
 }
 void cell_18650_measure_const_current(void)
 {
-	adjustShountCurrent(discharging_current);
 	if(battery_voltage <= CELL_18650_MIN_VOLTAGE) //measured - battery empty
 	{
 		measure_start = FALSE;
