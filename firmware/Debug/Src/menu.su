@@ -1,0 +1,4 @@
+menu.c:83:6:zeroTimer	0	static
+menu.c:90:6:pauseTimer	0	static
+menu.c:98:6:runTimer	0	static
+menu.c:108:6:actualizeLCD	16	static

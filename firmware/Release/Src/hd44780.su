@@ -1,0 +1,10 @@
+hd44780.c:3:9:busy_flag_check	32	static
+hd44780.c:116:9:get_bit	0	static
+hd44780.c:120:6:lcd_clock	8	static
+hd44780.c:81:6:lcd_write_nibble	4	static
+hd44780.c:62:9:lcd_print_letter	8	static
+hd44780.c:41:9:lcd_print	8	static
+hd44780.c:49:9:lcd_print_int	16	static
+hd44780.c:56:9:lcd_print_double	16	static
+hd44780.c:109:9:lcd_write	8	static
+hd44780.c:71:6:lcd_init	8	static
